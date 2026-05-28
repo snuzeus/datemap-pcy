@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(not exist *)",
+      "Read(//c/Users/pcy/.claude/skills/spec-to-blueprint-generator/**)",
+      "Edit(~/.claude/skills/spec-to-blueprint-generator/**)",
+      "Bash(gh auth *)",
+      "PowerShell"
+    ]
+  }
+}

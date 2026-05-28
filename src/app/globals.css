@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
+
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #ffffff;
+  color: #111827;
+}
+
+/* 지역 고유 그라데이션 */
+.g-seongsu { background: linear-gradient(160deg, #ff6b35 0%, #f7c59f 50%, #efefd0 100%); }
+.g-hongdae { background: linear-gradient(160deg, #667eea 0%, #764ba2 60%, #f093fb 100%); }
+.g-gangnam { background: linear-gradient(160deg, #f7971e 0%, #ffd200 100%); }
+.g-itaewon { background: linear-gradient(160deg, #11998e 0%, #38ef7d 100%); }
+.g-yeonnam { background: linear-gradient(160deg, #ee0979 0%, #ff6a00 100%); }
+
+/* 카드 인터랙션 */
+.pressable {
+  transition: transform 0.1s;
+}
+.pressable:active {
+  transform: scale(0.96);
+}
+
+/* 스크롤바 숨기기 */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

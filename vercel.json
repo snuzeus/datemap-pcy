@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/naver-trend",
+      "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/cron/seoul-population",
+      "schedule": "0 * * * *"
+    }
+  ]
+}
