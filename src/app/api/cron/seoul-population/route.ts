@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 
 const AREA_MAP: Record<string, string> = {
   seongsu: '성수1가1동',
@@ -34,12 +34,15 @@ export async function GET(request: Request) {
   if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+  if (!isSupabaseConfigured) {
+    return NextResponse.json({ error: 'Supabase not configured' }, { status: 503 });
+  }
 
   try {
     const results = await Promise.allSettled(
       Object.entries(AREA_MAP).map(async ([regionId, areaName]) => {
         const density = await fetchPopulationDensity(areaName);
-        await supabase
+        await supabase!
           .from('regions')
           .update({ population_density: density, updated_at: new Date().toISOString() })
           .eq('id', regionId);

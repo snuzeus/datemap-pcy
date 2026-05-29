@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { calcHotScore } from '@/lib/hotScore';
 
 const REGIONS = [
@@ -40,13 +40,16 @@ export async function GET(request: Request) {
   if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+  if (!isSupabaseConfigured) {
+    return NextResponse.json({ error: 'Supabase not configured' }, { status: 503 });
+  }
 
   try {
     const results = await Promise.allSettled(
       REGIONS.map(async (region) => {
         const searchVolume = await fetchSearchVolume(region.keyword);
 
-        const { data: existing } = await supabase
+        const { data: existing } = await supabase!
           .from('regions')
           .select('hot_score, population_density')
           .eq('id', region.id)
@@ -55,7 +58,7 @@ export async function GET(request: Request) {
         const populationDensity = existing?.population_density ?? 50;
         const hot_score = calcHotScore({ searchVolume, populationDensity });
 
-        await supabase.from('regions').upsert({
+        await supabase!.from('regions').upsert({
           id: region.id,
           name: region.name,
           search_volume: searchVolume,
