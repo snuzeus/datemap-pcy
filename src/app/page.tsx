@@ -1,5 +1,13 @@
+'use client';
+
 import Link from 'next/link';
-import { RegionBigCard, RegionSubCard } from '@/components/RegionCard';
+import { useRegionRanking } from '@/hooks/useRegionRanking';
+import {
+  RegionBigCard,
+  RegionSubCard,
+  RegionBigCardSkeleton,
+  RegionSubCardSkeleton,
+} from '@/components/RegionCard';
 import type { Region } from '@/types';
 
 const MOCK_REGIONS: Region[] = [
@@ -11,7 +19,11 @@ const MOCK_REGIONS: Region[] = [
 ];
 
 export default function HomePage() {
-  const [top, ...rest] = MOCK_REGIONS;
+  const { data, isLoading, isError } = useRegionRanking();
+
+  // Supabase 미연결 시 mock 데이터 fallback
+  const regions = data && data.length > 0 ? data : MOCK_REGIONS;
+  const [top, ...rest] = regions;
 
   return (
     <div className="flex flex-col min-h-screen max-w-sm mx-auto bg-white">
@@ -36,18 +48,31 @@ export default function HomePage() {
       </div>
 
       <div className="flex-1 overflow-y-auto no-scrollbar px-5 pb-24">
+
         {/* 1위 빅카드 */}
-        <RegionBigCard region={top} rank={1} />
+        {isLoading ? (
+          <RegionBigCardSkeleton />
+        ) : (
+          <RegionBigCard region={top} rank={1} />
+        )}
 
         {/* 2~5위 가로 스크롤 */}
         <div className="mt-4">
           <p className="text-[13px] font-bold text-gray-900 mb-2.5">그 외 핫플</p>
           <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1">
-            {rest.map((region, i) => (
-              <RegionSubCard key={region.id} region={region} rank={i + 2} />
-            ))}
+            {isLoading
+              ? Array.from({ length: 4 }).map((_, i) => <RegionSubCardSkeleton key={i} />)
+              : rest.map((region, i) => (
+                  <RegionSubCard key={region.id} region={region} rank={i + 2} />
+                ))}
           </div>
         </div>
+
+        {isError && (
+          <p className="text-center text-[12px] text-gray-400 mt-4">
+            데이터를 불러오지 못했어요. 잠시 후 다시 시도해주세요.
+          </p>
+        )}
 
         <p className="text-center text-[11px] text-gray-300 mt-4">🕐 오늘 09:00 업데이트</p>
       </div>
