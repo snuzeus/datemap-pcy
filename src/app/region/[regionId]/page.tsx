@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePlacesByRegion } from '@/hooks/usePlacesByRegion';
 import { PlaceCard, PlaceCardSkeleton } from '@/components/PlaceCard';
+import KakaoMapDynamic from '@/components/KakaoMapDynamic';
 
 const REGION_META: Record<string, { name: string; district: string; gradient: string }> = {
   seongsu: { name: '성수동', district: '서울 성동구', gradient: 'g-seongsu' },
@@ -59,8 +60,18 @@ export default function RegionPage({ params }: Props) {
         </div>
       </div>
 
+      {/* 지도 */}
+      {!isLoading && places && places.length > 0 && (
+        <div className="h-[130px] mx-4 mt-3 rounded-2xl overflow-hidden">
+          <KakaoMapDynamic
+            markers={places.map((p) => ({ lat: p.lat, lng: p.lng, label: p.name }))}
+            className="h-full"
+          />
+        </div>
+      )}
+
       {/* 장소 목록 — 필터는 다음 이슈에서 추가 */}
-      <div className="flex-1 px-4 pt-4 pb-24 space-y-2.5">
+      <div className="flex-1 px-4 pt-3 pb-24 space-y-2.5">
         {isLoading
           ? Array.from({ length: 6 }).map((_, i) => <PlaceCardSkeleton key={i} />)
           : places?.map((place) => (
