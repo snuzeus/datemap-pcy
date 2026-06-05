@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { PlaceCardSkeleton } from '@/components/PlaceCard';
 
 const REGION_META: Record<string, { name: string; district: string; gradient: string }> = {
   seongsu: { name: '성수동', district: '서울 성동구', gradient: 'g-seongsu' },
@@ -54,11 +55,11 @@ export default function RegionPage({ params }: Props) {
         </div>
       </div>
 
-      {/* 콘텐츠 — 이후 이슈에서 채워짐 */}
-      <div className="flex-1 px-4 pt-4 pb-24">
-        <p className="text-gray-400 text-sm text-center mt-8">
-          장소 목록을 불러오는 중...
-        </p>
+      {/* 콘텐츠 — 훅/필터는 이후 이슈에서 추가 */}
+      <div className="flex-1 px-4 pt-4 pb-24 space-y-2.5">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <PlaceCardSkeleton key={i} />
+        ))}
       </div>
 
       {/* 바텀 네비 */}
