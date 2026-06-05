@@ -1,5 +1,8 @@
+'use client';
+
 import Link from 'next/link';
-import { PlaceCardSkeleton } from '@/components/PlaceCard';
+import { usePlacesByRegion } from '@/hooks/usePlacesByRegion';
+import { PlaceCard, PlaceCardSkeleton } from '@/components/PlaceCard';
 
 const REGION_META: Record<string, { name: string; district: string; gradient: string }> = {
   seongsu: { name: '성수동', district: '서울 성동구', gradient: 'g-seongsu' },
@@ -16,15 +19,15 @@ type Props = {
 };
 
 export default function RegionPage({ params }: Props) {
-  const meta = REGION_META[params.regionId];
+  const { regionId } = params;
+  const meta = REGION_META[regionId];
+  const { data: places, isLoading } = usePlacesByRegion(regionId);
 
   if (!meta) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen max-w-sm mx-auto">
         <p className="text-gray-400 text-sm">존재하지 않는 지역이에요.</p>
-        <Link href="/" className="mt-4 text-gray-900 font-semibold text-sm underline">
-          홈으로
-        </Link>
+        <Link href="/" className="mt-4 text-gray-900 font-semibold text-sm underline">홈으로</Link>
       </div>
     );
   }
@@ -42,24 +45,31 @@ export default function RegionPage({ params }: Props) {
           ← 뒤로
         </Link>
         <div className="absolute bottom-0 left-0 right-0 p-5 z-10">
+          <p className="text-white/60 text-[11px] font-medium tracking-[0.2em] uppercase mb-0.5">
+            {meta.district}
+          </p>
           <div className="flex items-end justify-between">
-            <div>
-              <p className="text-white/60 text-[11px] font-medium tracking-[0.2em] uppercase mb-0.5">
-                {meta.district}
-              </p>
-              <h1 className="text-white text-[26px] font-black tracking-tight leading-none">
-                {meta.name}
-              </h1>
-            </div>
+            <h1 className="text-white text-[26px] font-black tracking-tight leading-none">
+              {meta.name}
+            </h1>
+            {!isLoading && (
+              <span className="text-white/50 text-[11px] pb-0.5">{places?.length ?? 0}곳</span>
+            )}
           </div>
         </div>
       </div>
 
-      {/* 콘텐츠 — 훅/필터는 이후 이슈에서 추가 */}
+      {/* 장소 목록 — 필터는 다음 이슈에서 추가 */}
       <div className="flex-1 px-4 pt-4 pb-24 space-y-2.5">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <PlaceCardSkeleton key={i} />
-        ))}
+        {isLoading
+          ? Array.from({ length: 6 }).map((_, i) => <PlaceCardSkeleton key={i} />)
+          : places?.map((place) => (
+              <PlaceCard key={place.id} place={place} regionId={regionId} />
+            ))}
+
+        {!isLoading && places?.length === 0 && (
+          <p className="text-center text-gray-400 text-sm mt-8">장소 정보가 없어요.</p>
+        )}
       </div>
 
       {/* 바텀 네비 */}
