@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import KakaoMapDynamic from '@/components/KakaoMapDynamic';
-import { usePlaceDetail } from '@/hooks/usePlaceDetail';
+import { usePlacesByRegion } from '@/hooks/usePlacesByRegion';
 
 const REGION_GRADIENT: Record<string, string> = {
   seongsu: 'g-seongsu',
@@ -32,7 +32,8 @@ function PlaceDetailContent({ placeId }: { placeId: string }) {
   const gradient = (regionId && REGION_GRADIENT[regionId]) ?? 'g-seongsu';
   const backHref = regionId ? `/region/${regionId}` : '/';
 
-  const { data: place, isLoading } = usePlaceDetail(placeId, regionId);
+  const { data: places, isLoading } = usePlacesByRegion(regionId ?? '');
+  const place = regionId ? (places?.find(p => p.id === placeId) ?? null) : null;
 
   if (isLoading) return <DetailSkeleton gradient={gradient} backHref={backHref} />;
 

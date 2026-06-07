@@ -71,5 +71,6 @@ export function usePlacesByRegion(regionId: string) {
       }
     },
     staleTime: 1000 * 60 * 10,
+    enabled: !!regionId,
   });
 }
