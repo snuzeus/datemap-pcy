@@ -8,8 +8,14 @@ export function loadKakaoMap(): Promise<void> {
   return new Promise((resolve, reject) => {
     if (typeof window === 'undefined') return resolve();
     if (window.kakao?.maps) return resolve();
-    if (document.getElementById('kakao-map-script')) {
-      window.kakao.maps.load(resolve);
+    const existingScript = document.getElementById('kakao-map-script') as HTMLScriptElement | null;
+    if (existingScript) {
+      if (window.kakao?.maps) {
+        window.kakao.maps.load(resolve);
+      } else {
+        existingScript.addEventListener('load', () => window.kakao.maps.load(resolve), { once: true });
+        existingScript.addEventListener('error', reject, { once: true });
+      }
       return;
     }
 

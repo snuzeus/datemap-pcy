@@ -51,8 +51,8 @@ export default function KakaoMap({ markers = [], center, className = '' }: Props
           map.setBounds(bounds);
         }
       })
-      .catch(() => {
-        // 카카오맵 키 미설정 시 조용히 실패
+      .catch((err) => {
+        console.error('[KakaoMap] 로드 실패:', err);
       });
 
     return () => {
