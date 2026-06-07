@@ -1,9 +1,15 @@
 'use client';
 
 import Link from 'next/link';
+import { useEffect, useMemo, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { usePlacesByRegion } from '@/hooks/usePlacesByRegion';
 import { PlaceCard, PlaceCardSkeleton } from '@/components/PlaceCard';
 import KakaoMapDynamic from '@/components/KakaoMapDynamic';
+import FilterBar from '@/components/FilterBar';
+import { useFilterStore } from '@/stores/useFilterStore';
+import { CATEGORY_VALUES, MOOD_VALUES } from '@/constants/filterTags';
+import type { CategoryTag, MoodTag } from '@/types';
 
 const REGION_META: Record<string, { name: string; district: string; gradient: string }> = {
   seongsu: { name: '성수동', district: '서울 성동구', gradient: 'g-seongsu' },
@@ -23,6 +29,47 @@ export default function RegionPage({ params }: Props) {
   const { regionId } = params;
   const meta = REGION_META[regionId];
   const { data: places, isLoading } = usePlacesByRegion(regionId);
+  const { category, mood, setCategory, toggleMood, reset } = useFilterStore();
+  const router = useRouter();
+  const hasMounted = useRef(false);
+
+  // URL에서 필터 복원 (마운트 시) + 이탈 시 reset
+  useEffect(() => {
+    const sp = new URLSearchParams(window.location.search);
+    const catParam = sp.get('category');
+    const moodParam = sp.get('mood');
+    if (catParam && CATEGORY_VALUES.includes(catParam as CategoryTag)) {
+      setCategory(catParam as CategoryTag);
+    }
+    if (moodParam) {
+      moodParam.split(',').forEach((m) => {
+        if (MOOD_VALUES.includes(m as MoodTag)) toggleMood(m as MoodTag);
+      });
+    }
+    hasMounted.current = true;
+    return () => reset();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // 필터 변경 시 URL 동기화
+  useEffect(() => {
+    if (!hasMounted.current) return;
+    const sp = new URLSearchParams();
+    if (category) sp.set('category', category);
+    if (mood.length > 0) sp.set('mood', mood.join(','));
+    const qs = sp.toString();
+    router.replace(`/region/${regionId}${qs ? `?${qs}` : ''}`, { scroll: false });
+  }, [category, mood, regionId, router]);
+
+  // 클라이언트 사이드 필터링
+  const filteredPlaces = useMemo(() => {
+    if (!places) return [];
+    return places.filter((place) => {
+      if (category && place.category !== category) return false;
+      if (mood.length > 0 && !mood.some((m) => place.moods.includes(m))) return false;
+      return true;
+    });
+  }, [places, category, mood]);
 
   if (!meta) {
     return (
@@ -60,25 +107,32 @@ export default function RegionPage({ params }: Props) {
         </div>
       </div>
 
+      {/* 필터 바 */}
+      <FilterBar />
+
       {/* 지도 */}
-      {!isLoading && places && places.length > 0 && (
+      {!isLoading && filteredPlaces.length > 0 && (
         <div className="h-[130px] mx-4 mt-3 rounded-2xl overflow-hidden">
           <KakaoMapDynamic
-            markers={places.map((p) => ({ lat: p.lat, lng: p.lng, label: p.name }))}
+            markers={filteredPlaces.map((p) => ({ lat: p.lat, lng: p.lng, label: p.name }))}
             className="h-full"
           />
         </div>
       )}
 
-      {/* 장소 목록 — 필터는 다음 이슈에서 추가 */}
+      {/* 장소 목록 */}
       <div className="flex-1 px-4 pt-3 pb-24 space-y-2.5">
         {isLoading
           ? Array.from({ length: 6 }).map((_, i) => <PlaceCardSkeleton key={i} />)
-          : places?.map((place) => (
+          : filteredPlaces.map((place) => (
               <PlaceCard key={place.id} place={place} regionId={regionId} />
             ))}
 
-        {!isLoading && places?.length === 0 && (
+        {!isLoading && places && places.length > 0 && filteredPlaces.length === 0 && (
+          <p className="text-center text-gray-400 text-sm mt-8">필터에 맞는 장소가 없어요.</p>
+        )}
+
+        {!isLoading && (!places || places.length === 0) && (
           <p className="text-center text-gray-400 text-sm mt-8">장소 정보가 없어요.</p>
         )}
       </div>
