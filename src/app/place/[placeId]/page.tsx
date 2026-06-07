@@ -73,12 +73,22 @@ function PlaceDetailContent({ placeId }: { placeId: string }) {
       </div>
 
       {/* 카카오맵 단독 마커 */}
-      <div className="h-[130px] mx-4 mt-3 rounded-2xl overflow-hidden">
-        <KakaoMapDynamic
-          markers={[{ lat: place.lat, lng: place.lng, label: place.name }]}
-          center={{ lat: place.lat, lng: place.lng }}
-          className="h-full"
-        />
+      <div className="mx-4 mt-3">
+        <div className="h-[130px] rounded-2xl overflow-hidden">
+          <KakaoMapDynamic
+            markers={[{ lat: place.lat, lng: place.lng, label: place.name }]}
+            center={{ lat: place.lat, lng: place.lng }}
+            className="h-full"
+          />
+        </div>
+        <a
+          href={`https://place.map.kakao.com/${place.kakao_place_id}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-1.5 flex justify-end text-[12px] text-gray-400 underline outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-2"
+        >
+          카카오맵에서 보기 →
+        </a>
       </div>
 
       {/* 상세 정보 */}
