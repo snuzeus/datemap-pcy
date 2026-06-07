@@ -20,7 +20,7 @@ export function PlaceCard({ place, regionId }: Props) {
   const gradient = REGION_GRADIENT[regionId] ?? 'g-seongsu';
 
   return (
-    <Link href={`/place/${place.id}`}>
+    <Link href={`/place/${place.id}?regionId=${regionId}`}>
       <article className="pressable bg-white rounded-2xl border border-gray-100 shadow-sm flex overflow-hidden">
         {/* 썸네일 */}
         <div className={`w-[88px] flex-shrink-0 ${!place.image_url ? gradient : ''}`}>
