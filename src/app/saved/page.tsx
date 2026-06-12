@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useSavedPlaces } from '@/hooks/useSavedPlaces';
 import { PlaceCard, PlaceCardSkeleton } from '@/components/PlaceCard';
@@ -10,7 +11,26 @@ import { AuthModal } from '@/components/AuthModal';
 export default function SavedPage() {
   const user = useAuthStore((s) => s.user);
   const [showModal, setShowModal] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
   const { data: savedPlaces = [], isLoading } = useSavedPlaces(user?.id);
+  const router = useRouter();
+
+  async function handleCreateCourse() {
+    if (isCreating || savedPlaces.length < 2) return;
+    setIsCreating(true);
+    try {
+      const res = await fetch('/api/courses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ places: savedPlaces }),
+      });
+      if (!res.ok) throw new Error('코스 생성 실패');
+      const { id } = await res.json() as { id: string };
+      router.push(`/share/${id}`);
+    } catch {
+      setIsCreating(false);
+    }
+  }
 
   if (!user) {
     return (
@@ -67,15 +87,22 @@ export default function SavedPage() {
         </div>
       )}
 
-      {/* 코스 만들기 — Feature 7 코스 API 구현 후 활성화 */}
       {savedPlaces.length >= 2 && (
         <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-sm px-4 py-4 bg-white/90 backdrop-blur-sm border-t border-gray-100 z-30">
           <button
             type="button"
-            disabled
-            className="w-full py-3.5 bg-gray-900 text-white font-bold text-[15px] rounded-2xl opacity-40 cursor-not-allowed outline-none"
+            onClick={handleCreateCourse}
+            disabled={isCreating}
+            className="w-full py-3.5 bg-gray-900 text-white font-bold text-[15px] rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            코스 만들기 · {savedPlaces.length}곳
+            {isCreating ? (
+              <span className="flex items-center justify-center gap-2">
+                <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                코스 만드는 중...
+              </span>
+            ) : (
+              `코스 만들기 · ${savedPlaces.length}곳`
+            )}
           </button>
         </div>
       )}
