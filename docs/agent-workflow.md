@@ -28,6 +28,16 @@ feature/filter          ← Feature 5: 이중 필터
 feature/place-detail    ← Feature 6: 장소 상세
 ```
 
+새 Feature 시작 시 반드시 `main`에서 새 브랜치를 만들고 시작한다:
+
+```bash
+git checkout main
+git pull upstream main        # upstream 최신 반영
+git checkout -b feature/[이름]
+```
+
+브랜치 이름 규칙: `feature/[영문-소문자-하이픈]`
+
 ### Issue 단위 — 파일 or 독립 로직 1개
 커밋 1개 = Issue 1개. `closes #N` 으로 자동 닫힘.
 
@@ -49,6 +59,8 @@ feature/place-detail    ← Feature 6: 장소 상세
 
 ```
 ① GitHub에서 다음 Issue 확인
+        ↓
+① -1. 새 Feature면 브랜치 생성: git checkout main → git pull upstream main → git checkout -b feature/[이름]
         ↓
 ② Claude에게 요청 (패턴 A~D 중 선택)
         ↓
