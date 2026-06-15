@@ -72,7 +72,7 @@ export async function GET(request: Request) {
 
     const updated = results.filter((r) => r.status === 'fulfilled').length;
     return NextResponse.json({ updated, total: REGIONS.length });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

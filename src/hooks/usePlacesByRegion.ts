@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import type { Place, CategoryTag, MoodTag } from '@/types';
+import type { Place, CategoryTag } from '@/types';
 
 // 카카오 로컬 API 응답 형태
 type KakaoPlace = {

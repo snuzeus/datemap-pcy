@@ -1,7 +1,11 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { loadKakaoMap } from '@/lib/kakao';
+import {
+  loadKakaoMap,
+  type KakaoMapInstance,
+  type KakaoMarkerInstance,
+} from '@/lib/kakao';
 
 type Marker = {
   lat: number;
@@ -17,8 +21,8 @@ type Props = {
 
 export default function KakaoMap({ markers = [], center, className = '' }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<any>(null);
-  const markersRef = useRef<any[]>([]);
+  const mapRef = useRef<KakaoMapInstance | null>(null);
+  const markersRef = useRef<KakaoMarkerInstance[]>([]);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -26,6 +30,8 @@ export default function KakaoMap({ markers = [], center, className = '' }: Props
     loadKakaoMap()
       .then(() => {
         const kakao = window.kakao;
+        if (!kakao?.maps || !containerRef.current) return;
+
         const defaultCenter = center ?? markers[0] ?? { lat: 37.5445, lng: 127.0557 };
 
         const map = new kakao.maps.Map(containerRef.current, {

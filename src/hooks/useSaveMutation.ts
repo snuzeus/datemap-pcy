@@ -2,34 +2,43 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/stores/useAuthStore';
-import { localSavedPlaces } from '@/lib/localSavedStore';
 import type { Place } from '@/types';
+
+type ToggleSaveInput = {
+  place: Place;
+  shouldSave: boolean;
+};
+
+async function requestSaveToggle({ place, shouldSave }: ToggleSaveInput) {
+  const response = await fetch('/api/saved-places', {
+    method: shouldSave ? 'POST' : 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(shouldSave ? { place } : { placeId: place.id }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to ${shouldSave ? 'save' : 'delete'} place`);
+  }
+}
 
 export function useSaveMutation() {
   const queryClient = useQueryClient();
   const user = useAuthStore((s) => s.user);
 
   return useMutation({
-    mutationFn: async (place: Place) => {
-      const idx = localSavedPlaces.findIndex((p) => p.id === place.id);
-      if (idx >= 0) {
-        localSavedPlaces.splice(idx, 1);
-      } else {
-        localSavedPlaces.push(place);
-      }
-      return [...localSavedPlaces];
-    },
-    onMutate: async (place) => {
+    mutationFn: requestSaveToggle,
+    onMutate: async ({ place, shouldSave }) => {
       const key = ['saved-places', user?.id];
       await queryClient.cancelQueries({ queryKey: key });
       const prev = queryClient.getQueryData<Place[]>(key) ?? [];
-      const next = prev.some((p) => p.id === place.id)
-        ? prev.filter((p) => p.id !== place.id)
-        : [...prev, place];
+      const exists = prev.some((p) => p.id === place.id);
+      const next = shouldSave
+        ? (exists ? prev : [place, ...prev])
+        : prev.filter((p) => p.id !== place.id);
       queryClient.setQueryData(key, next);
       return { prev };
     },
-    onError: (_err, _place, ctx) => {
+    onError: (_err, _variables, ctx) => {
       if (ctx?.prev !== undefined && user?.id) {
         queryClient.setQueryData(['saved-places', user.id], ctx.prev);
       }
