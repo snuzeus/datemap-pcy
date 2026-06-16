@@ -9,15 +9,8 @@ import KakaoMapDynamic from '@/components/KakaoMapDynamic';
 import FilterBar from '@/components/FilterBar';
 import { useFilterStore } from '@/stores/useFilterStore';
 import { CATEGORY_VALUES, MOOD_VALUES } from '@/constants/filterTags';
+import { REGION_CATALOG_BY_ID } from '@/lib/regionCatalog';
 import type { CategoryTag, MoodTag } from '@/types';
-
-const REGION_META: Record<string, { name: string; district: string; gradient: string }> = {
-  seongsu: { name: '성수동', district: '서울 성동구', gradient: 'g-seongsu' },
-  hongdae: { name: '홍대·합정', district: '서울 마포구', gradient: 'g-hongdae' },
-  gangnam: { name: '강남·청담', district: '서울 강남구', gradient: 'g-gangnam' },
-  itaewon: { name: '이태원·한남', district: '서울 용산구', gradient: 'g-itaewon' },
-  yeonnam: { name: '연남·망원', district: '서울 마포구', gradient: 'g-yeonnam' },
-};
 
 const DARK_OVERLAY = 'linear-gradient(to top, rgba(0,0,0,0.65), transparent 55%)';
 
@@ -27,7 +20,7 @@ type Props = {
 
 export default function RegionPage({ params }: Props) {
   const { regionId } = params;
-  const meta = REGION_META[regionId];
+  const meta = REGION_CATALOG_BY_ID[regionId];
   const { data: places, isLoading, isError, refetch } = usePlacesByRegion(regionId);
   const { category, mood, setCategory, toggleMood, reset } = useFilterStore();
   const router = useRouter();

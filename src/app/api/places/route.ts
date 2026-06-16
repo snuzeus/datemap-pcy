@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { isSupabaseAdminConfigured, supabaseAdmin } from '@/lib/supabaseAdmin';
+import { REGION_CATALOG_BY_ID } from '@/lib/regionCatalog';
 import type { CategoryTag, MoodTag, Place } from '@/types';
 
 type KakaoPlace = {
@@ -24,14 +25,6 @@ type GooglePlaceDetails = {
 
 const KAKAO_CATEGORY_CODES = ['CE7', 'FD6', 'CT1', 'AT4', 'MT1'] as const;
 const GOOGLE_PHOTO_ENRICH_LIMIT = 12;
-
-const REGION_COORDS: Record<string, { x: string; y: string }> = {
-  seongsu: { x: '127.0557', y: '37.5445' },
-  hongdae: { x: '126.9236', y: '37.5561' },
-  gangnam: { x: '127.0276', y: '37.4979' },
-  itaewon: { x: '126.9946', y: '37.5348' },
-  yeonnam: { x: '126.9207', y: '37.5612' },
-};
 
 const REGION_MOODS: Record<string, MoodTag[]> = {
   seongsu: ['힙한', '감성적인'],
@@ -194,6 +187,7 @@ async function fetchCachedPlaces(regionId: string): Promise<Place[]> {
 
 async function upsertPlaces(places: Place[]) {
   if (!isSupabaseAdminConfigured || !supabaseAdmin || places.length === 0) return;
+  const regionId = places[0]?.region_id;
 
   const { error } = await supabaseAdmin.from('places').upsert(
     places.map((place) => ({
@@ -206,10 +200,24 @@ async function upsertPlaces(places: Place[]) {
   if (error) {
     console.error('[places] Supabase cache upsert failed:', error.message);
   }
+
+  if (regionId) {
+    const { error: regionError } = await supabaseAdmin
+      .from('regions')
+      .update({
+        place_count: places.length,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', regionId);
+
+    if (regionError) {
+      console.error('[places] Region place_count update failed:', regionError.message);
+    }
+  }
 }
 
 async function fetchKakaoPlaces(regionId: string) {
-  const coords = REGION_COORDS[regionId];
+  const coords = REGION_CATALOG_BY_ID[regionId]?.coords;
   const restKey = process.env.KAKAO_REST_API_KEY;
 
   if (!coords || !restKey) return [];
@@ -256,7 +264,7 @@ export async function GET(request: NextRequest) {
   const regionId = request.nextUrl.searchParams.get('regionId');
 
   if (!regionId) return NextResponse.json({ error: 'regionId required' }, { status: 400 });
-  if (!REGION_COORDS[regionId]) return NextResponse.json({ error: 'Unknown region' }, { status: 400 });
+  if (!REGION_CATALOG_BY_ID[regionId]) return NextResponse.json({ error: 'Unknown region' }, { status: 400 });
 
   try {
     const livePlaces = await fetchKakaoPlaces(regionId);

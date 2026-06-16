@@ -2,14 +2,7 @@ import { NextResponse } from 'next/server';
 import { isSupabaseConfigured } from '@/lib/supabase';
 import { isSupabaseAdminConfigured, supabaseAdmin } from '@/lib/supabaseAdmin';
 import { calcHotScore } from '@/lib/hotScore';
-
-const AREA_MAP: Record<string, string> = {
-  seongsu: '성수카페거리',
-  hongdae: '홍대 관광특구',
-  gangnam: '강남역',
-  itaewon: '이태원 관광특구',
-  yeonnam: '연남동',
-};
+import { REGION_CATALOG } from '@/lib/regionCatalog';
 
 const CONGESTION_SCORE: Record<string, number> = {
   여유: 20,
@@ -98,9 +91,12 @@ export async function GET(request: Request) {
   }
 
   const admin = supabaseAdmin;
+  const trackedRegions = REGION_CATALOG.filter((region) => region.seoulAreaName);
 
   const results = await Promise.allSettled(
-    Object.entries(AREA_MAP).map(async ([regionId, areaName]) => {
+    trackedRegions.map(async (region) => {
+      const regionId = region.id;
+      const areaName = region.seoulAreaName!;
       const population = await fetchPopulationDensity(areaName);
       const updatedAt = new Date().toISOString();
 
@@ -145,7 +141,7 @@ export async function GET(request: Request) {
   const successes = results.filter((result) => result.status === 'fulfilled');
   const failures = results
     .map((result, index) => ({
-      regionId: Object.keys(AREA_MAP)[index],
+      regionId: trackedRegions[index].id,
       reason: getFailureReason(result),
     }))
     .filter((failure) => failure.reason);
@@ -153,7 +149,7 @@ export async function GET(request: Request) {
   return NextResponse.json(
     {
       updated: successes.length,
-      total: Object.keys(AREA_MAP).length,
+      total: trackedRegions.length,
       results: successes.map((result) => result.value),
       failures,
     },

@@ -1,13 +1,6 @@
 import { NextResponse } from 'next/server';
 import { isSupabaseAdminConfigured, supabaseAdmin } from '@/lib/supabaseAdmin';
-
-const REGIONS = [
-  { id: 'seongsu', query: '성수동 카페거리 서울' },
-  { id: 'hongdae', query: '홍대 합정 거리 서울' },
-  { id: 'gangnam', query: '강남 청담 서울' },
-  { id: 'itaewon', query: '이태원 한남동 서울' },
-  { id: 'yeonnam', query: '연남동 망원동 서울' },
-];
+import { REGION_CATALOG } from '@/lib/regionCatalog';
 
 type GoogleTextSearchPlace = {
   id?: string;
@@ -88,8 +81,8 @@ export async function GET(request: Request) {
   }
 
   const results = await Promise.allSettled(
-    REGIONS.map(async (region) => {
-      const googlePlaceId = await findGooglePlaceId(region.query);
+    REGION_CATALOG.map(async (region) => {
+      const googlePlaceId = await findGooglePlaceId(region.imageQuery);
       if (!googlePlaceId) throw new Error(`No Google place found for ${region.id}`);
 
       const photoName = await findGooglePhotoName(googlePlaceId);
@@ -116,7 +109,7 @@ export async function GET(request: Request) {
   const successes = results.filter((result) => result.status === 'fulfilled');
   const failures = results
     .map((result, index) => ({
-      regionId: REGIONS[index].id,
+      regionId: REGION_CATALOG[index].id,
       reason: getFailureReason(result),
     }))
     .filter((failure) => failure.reason);
@@ -124,7 +117,7 @@ export async function GET(request: Request) {
   return NextResponse.json(
     {
       updated: successes.length,
-      total: REGIONS.length,
+      total: REGION_CATALOG.length,
       results: successes.map((result) => result.value),
       failures,
     },

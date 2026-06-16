@@ -1,15 +1,8 @@
 'use client';
 
 import Link from 'next/link';
+import { getRegionGradient } from '@/lib/regionCatalog';
 import type { Place } from '@/types';
-
-const REGION_GRADIENT: Record<string, string> = {
-  seongsu: 'g-seongsu',
-  hongdae: 'g-hongdae',
-  gangnam: 'g-gangnam',
-  itaewon: 'g-itaewon',
-  yeonnam: 'g-yeonnam',
-};
 
 type Props = {
   place: Place;
@@ -17,7 +10,7 @@ type Props = {
 };
 
 export function PlaceCard({ place, regionId }: Props) {
-  const gradient = REGION_GRADIENT[regionId] ?? 'g-seongsu';
+  const gradient = getRegionGradient(regionId);
 
   return (
     <Link href={`/place/${place.id}?regionId=${regionId}`}>
