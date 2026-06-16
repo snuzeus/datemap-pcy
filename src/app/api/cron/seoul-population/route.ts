@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+import { isSupabaseConfigured } from '@/lib/supabase';
+import { isSupabaseAdminConfigured, supabaseAdmin } from '@/lib/supabaseAdmin';
 
 const AREA_MAP: Record<string, string> = {
   seongsu: '성수카페거리',
@@ -88,23 +89,37 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Supabase not configured' }, { status: 503 });
   }
 
+  if (!isSupabaseAdminConfigured || !supabaseAdmin) {
+    return NextResponse.json(
+      { error: 'SUPABASE_SERVICE_ROLE_KEY is missing' },
+      { status: 503 },
+    );
+  }
+
+  const admin = supabaseAdmin;
+
   const results = await Promise.allSettled(
     Object.entries(AREA_MAP).map(async ([regionId, areaName]) => {
       const population = await fetchPopulationDensity(areaName);
+      const updatedAt = new Date().toISOString();
 
-      const { error } = await supabase!
+      const { data, error } = await admin
         .from('regions')
         .update({
           population_density: population.density,
-          updated_at: new Date().toISOString(),
+          updated_at: updatedAt,
         })
-        .eq('id', regionId);
+        .eq('id', regionId)
+        .select('id, population_density, updated_at')
+        .single();
 
       if (error) throw new Error(`Supabase update failed for ${regionId}: ${error.message}`);
+      if (!data) throw new Error(`Supabase update affected no rows for ${regionId}`);
 
       return {
         regionId,
         ...population,
+        updatedAt: data.updated_at as string,
       };
     }),
   );
