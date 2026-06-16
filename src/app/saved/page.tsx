@@ -99,11 +99,28 @@ export default function SavedPage() {
           </Link>
         </div>
       ) : (
-        <div className="px-4 pt-2 pb-32 space-y-4">
-          <CourseEditor places={coursePlaces} onChange={handleCourseOrderChange} />
-          {savedPlaces.map((place) => (
-            <PlaceCard key={place.id} place={place} regionId={place.region_id} />
-          ))}
+        <div className="pb-32">
+          <div className="bg-gray-50 border-y border-gray-100 px-4 py-4">
+            <CourseEditor places={coursePlaces} onChange={handleCourseOrderChange} />
+          </div>
+
+          <section className="px-4 pt-5 space-y-3" aria-labelledby="saved-places-title">
+            <div className="flex items-end justify-between gap-3">
+              <div>
+                <p className="mb-0.5 text-[11px] text-gray-400">Saved</p>
+                <h2 id="saved-places-title" className="text-[16px] font-black text-gray-900">
+                  저장된 장소
+                </h2>
+              </div>
+              <p className="text-[12px] text-gray-400">{savedPlaces.length}곳</p>
+            </div>
+
+            <div className="space-y-2.5">
+              {savedPlaces.map((place) => (
+                <PlaceCard key={place.id} place={place} regionId={place.region_id} />
+              ))}
+            </div>
+          </section>
         </div>
       )}
 
