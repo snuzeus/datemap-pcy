@@ -1,6 +1,6 @@
 type HotScoreInput = {
-  searchVolume: number;    // 네이버 데이터랩 검색량 (0~100 normalized)
-  populationDensity: number; // 서울 도시데이터 혼잡도 (0~100 normalized)
+  searchVolume: number; // region catalog baseline interest score (0-100 normalized)
+  populationDensity: number; // Seoul realtime congestion score (0-100 normalized)
 };
 
 const SEARCH_WEIGHT = 0.6;

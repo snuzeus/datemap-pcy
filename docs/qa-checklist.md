@@ -49,12 +49,6 @@
 
 ## Feature 2: 데이터 파이프라인
 
-### 네이버 데이터랩 API 연동 및 지역별 검색량 트렌드 수집
-- [ ] `CRON_SECRET` 없이 `/api/cron/naver-trend` 호출 시 `401`이 반환되는지 확인한다.
-- [ ] 올바른 `Authorization: Bearer CRON_SECRET`로 호출하면 수집 로직이 실행되는지 확인한다.
-- [ ] 네이버 API 키가 없거나 잘못됐을 때 서버가 500으로 죽지 않고 에러 응답을 반환하는지 확인한다.
-- [ ] Supabase upsert 대상 지역 데이터의 날짜와 score 필드가 예상대로 저장되는지 확인한다.
-
 ### 서울 실시간 도시데이터 API 연동 및 혼잡도 수집
 - [ ] `CRON_SECRET` 없이 `/api/cron/seoul-population` 호출 시 `401`이 반환되는지 확인한다.
 - [ ] 서울 API 응답이 비어 있을 때 기존 데이터가 무작정 삭제되지 않는지 확인한다.

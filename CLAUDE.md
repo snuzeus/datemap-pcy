@@ -15,7 +15,7 @@
 | 스타일 | Tailwind CSS |
 | DB / Auth | Supabase (PostgreSQL + Auth) |
 | 지도 | 카카오맵 JavaScript API |
-| 외부 데이터 | 네이버 데이터랩 API · 서울 실시간 도시데이터 API · 카카오 로컬 API |
+| 외부 데이터 | 서울 실시간 도시데이터 API · 카카오 로컬 API |
 | 배포 | Vercel (cron 포함) |
 
 ---
@@ -32,7 +32,8 @@ src/
 │   ├── share/[courseId]/page.tsx         # 코스 공유 뷰 (OG 태그)
 │   └── api/
 │       ├── cron/
-│       │   ├── naver-trend/route.ts      # 네이버 데이터랩 수집 (cron)
+│       │   ├── regions/route.ts          # 지역 카탈로그 동기화 (cron)
+│       │   ├── region-images/route.ts    # 지역 대표 이미지 수집 (cron)
 │       │   └── seoul-population/route.ts # 서울 실시간 인구 수집 (cron)
 │       ├── places/route.ts
 │       ├── saved-places/route.ts

@@ -32,7 +32,6 @@ $f1 = @(
 
 # ── Feature 2: 데이터 파이프라인 ──
 $f2 = @(
-  @{ title="[Feature 2] 네이버 데이터랩 API 연동 — 지역별 검색량 트렌드 수집"; labels="data"; milestone="Week 1" }
   @{ title="[Feature 2] 서울 실시간 도시데이터 API 연동 — 혼잡도 수집";      labels="data"; milestone="Week 1" }
   @{ title="[Feature 2] 지역 핫도 스코어 산출 로직 구현 (lib/hotScore.ts)"; labels="data"; milestone="Week 1" }
   @{ title="[Feature 2] Vercel Cron Job 설정 — 1일 1회 자동 수집";          labels="data"; milestone="Week 1" }

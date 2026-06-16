@@ -20,8 +20,6 @@ Add the same keys to both Preview and Production unless a provider requires a se
 | `NEXT_PUBLIC_KAKAO_MAP_KEY` | Preview, Production | Kakao JavaScript key |
 | `KAKAO_REST_API_KEY` | Preview, Production | Kakao Local REST API key |
 | `GOOGLE_PLACES_API_KEY` | Preview, Production | Place and region photos |
-| `NAVER_CLIENT_ID` | Production | Naver DataLab collection |
-| `NAVER_CLIENT_SECRET` | Production | Naver DataLab collection |
 | `SEOUL_API_KEY` | Production | Seoul realtime city data collection |
 | `CRON_SECRET` | Preview, Production | Random long value. Vercel Cron sends it as `Authorization: Bearer ...` |
 
@@ -66,7 +64,6 @@ In Kakao Developers > Product Settings > Kakao Login:
 | Path | Schedule | Purpose |
 | --- | --- | --- |
 | `/api/cron/regions` | Daily 15:00 UTC | Seed and sync region catalog |
-| `/api/cron/naver-trend` | Daily 00:00 UTC | Refresh search volume and hot score |
 | `/api/cron/seoul-population` | Daily 01:00 UTC | Refresh realtime congestion and hot score |
 | `/api/cron/region-images` | Weekly Sunday 16:00 UTC | Refresh region representative photos |
 
