@@ -10,14 +10,19 @@ type ToggleSaveInput = {
 };
 
 async function requestSaveToggle({ place, shouldSave }: ToggleSaveInput) {
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), 10000);
+
   const response = await fetch('/api/saved-places', {
     method: shouldSave ? 'POST' : 'DELETE',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(shouldSave ? { place } : { placeId: place.id }),
-  });
+    signal: controller.signal,
+  }).finally(() => window.clearTimeout(timeoutId));
 
   if (!response.ok) {
-    throw new Error(`Failed to ${shouldSave ? 'save' : 'delete'} place`);
+    const data = await response.json().catch(() => null) as { error?: string } | null;
+    throw new Error(data?.error ?? `Failed to ${shouldSave ? 'save' : 'delete'} place`);
   }
 }
 

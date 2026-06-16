@@ -91,9 +91,10 @@ export async function GET() {
   try {
     const places = await getSavedPlaces(userId);
     return NextResponse.json({ places });
-  } catch {
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      { error: 'Failed to load saved places' },
+      { error: `Failed to load saved places: ${message}` },
       { status: 500 },
     );
   }
@@ -131,7 +132,7 @@ export async function POST(request: NextRequest) {
 
   if (error) {
     return NextResponse.json(
-      { error: 'Failed to save place' },
+      { error: `Failed to save place: ${error.message}` },
       { status: 500 },
     );
   }
@@ -168,7 +169,7 @@ export async function DELETE(request: NextRequest) {
 
   if (error) {
     return NextResponse.json(
-      { error: 'Failed to delete saved place' },
+      { error: `Failed to delete saved place: ${error.message}` },
       { status: 500 },
     );
   }
