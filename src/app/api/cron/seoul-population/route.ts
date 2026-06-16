@@ -20,17 +20,19 @@ type SeoulPopulationStatus = {
   AREA_CONGEST_LVL?: string;
 };
 
-type SeoulCityData = {
-  LIVE_PPLTN_STTS?: SeoulPopulationStatus | SeoulPopulationStatus[];
-};
-
 type SeoulPopulationResponse = {
   SeoulRtd?: {
-    CITYDATA?: SeoulCityData;
+    CITYDATA?: {
+      LIVE_PPLTN_STTS?: SeoulPopulationStatus | SeoulPopulationStatus[];
+    };
   };
+  'SeoulRtd.citydata_ppltn'?: SeoulPopulationStatus[];
 };
 
 function getPopulationStatus(data: SeoulPopulationResponse) {
+  const cityDataStatus = data['SeoulRtd.citydata_ppltn'];
+  if (cityDataStatus?.length) return cityDataStatus[0];
+
   const status = data.SeoulRtd?.CITYDATA?.LIVE_PPLTN_STTS;
   return Array.isArray(status) ? status[0] : status;
 }
