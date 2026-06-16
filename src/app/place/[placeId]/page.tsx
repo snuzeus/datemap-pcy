@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import KakaoMapDynamic from '@/components/KakaoMapDynamic';
 import { usePlacesByRegion } from '@/hooks/usePlacesByRegion';
 import { SaveButton } from '@/components/SaveButton';
+import { ReviewList } from '@/components/ReviewList';
 
 const REGION_GRADIENT: Record<string, string> = {
   seongsu: 'g-seongsu',
@@ -132,6 +133,8 @@ function PlaceDetailContent({ placeId }: { placeId: string }) {
           <p className="text-[11px] text-gray-400 mb-0.5">주소</p>
           <p className="text-[13px] text-gray-900 font-medium">{place.address}</p>
         </div>
+
+        <ReviewList place={place} />
       </div>
 
       {/* 저장 버튼 */}
