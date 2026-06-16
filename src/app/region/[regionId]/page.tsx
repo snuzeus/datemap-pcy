@@ -28,13 +28,15 @@ type Props = {
 export default function RegionPage({ params }: Props) {
   const { regionId } = params;
   const meta = REGION_META[regionId];
-  const { data: places, isLoading } = usePlacesByRegion(regionId);
+  const { data: places, isLoading, isError, refetch } = usePlacesByRegion(regionId);
   const { category, mood, setCategory, toggleMood, reset } = useFilterStore();
   const router = useRouter();
   const hasMounted = useRef(false);
 
   // URL에서 필터 복원 (마운트 시) + 이탈 시 reset
   useEffect(() => {
+    reset();
+
     const sp = new URLSearchParams(window.location.search);
     const catParam = sp.get('category');
     const moodParam = sp.get('mood');
@@ -128,11 +130,33 @@ export default function RegionPage({ params }: Props) {
               <PlaceCard key={place.id} place={place} regionId={regionId} />
             ))}
 
-        {!isLoading && places && places.length > 0 && filteredPlaces.length === 0 && (
-          <p className="text-center text-gray-400 text-sm mt-8">필터에 맞는 장소가 없어요.</p>
+        {!isLoading && isError && (
+          <div className="mt-8 flex flex-col items-center gap-3">
+            <p className="text-center text-gray-400 text-sm">장소 정보를 불러오지 못했어요.</p>
+            <button
+              type="button"
+              onClick={() => void refetch()}
+              className="rounded-2xl bg-gray-900 px-5 py-2.5 text-[13px] font-bold text-white outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-2"
+            >
+              다시 불러오기
+            </button>
+          </div>
         )}
 
-        {!isLoading && (!places || places.length === 0) && (
+        {!isLoading && !isError && places && places.length > 0 && filteredPlaces.length === 0 && (
+          <div className="mt-8 flex flex-col items-center gap-3">
+            <p className="text-center text-gray-400 text-sm">필터에 맞는 장소가 없어요.</p>
+            <button
+              type="button"
+              onClick={reset}
+              className="rounded-2xl border border-gray-200 bg-white px-5 py-2.5 text-[13px] font-bold text-gray-900 outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-2"
+            >
+              필터 초기화
+            </button>
+          </div>
+        )}
+
+        {!isLoading && !isError && (!places || places.length === 0) && (
           <p className="text-center text-gray-400 text-sm mt-8">장소 정보가 없어요.</p>
         )}
       </div>
