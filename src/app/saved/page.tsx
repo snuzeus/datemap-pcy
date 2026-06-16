@@ -1,28 +1,47 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useSavedPlaces } from '@/hooks/useSavedPlaces';
 import { PlaceCard, PlaceCardSkeleton } from '@/components/PlaceCard';
 import { AuthModal } from '@/components/AuthModal';
+import { CourseEditor } from '@/components/CourseEditor';
+import type { Place } from '@/types';
 
 export default function SavedPage() {
   const user = useAuthStore((s) => s.user);
   const [showModal, setShowModal] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const { data: savedPlaces = [], isLoading } = useSavedPlaces(user?.id);
+  const [coursePlaces, setCoursePlaces] = useState<Place[]>([]);
   const router = useRouter();
 
+  useEffect(() => {
+    setCoursePlaces((prev) => {
+      if (prev.length === 0) return savedPlaces;
+
+      const savedIds = new Set(savedPlaces.map((place) => place.id));
+      const orderedExisting = prev.filter((place) => savedIds.has(place.id));
+      const existingIds = new Set(orderedExisting.map((place) => place.id));
+      const newlySaved = savedPlaces.filter((place) => !existingIds.has(place.id));
+      return [...orderedExisting, ...newlySaved];
+    });
+  }, [savedPlaces]);
+
+  const handleCourseOrderChange = useCallback((places: Place[]) => {
+    setCoursePlaces(places);
+  }, []);
+
   async function handleCreateCourse() {
-    if (isCreating || savedPlaces.length < 2) return;
+    if (isCreating || coursePlaces.length < 2) return;
     setIsCreating(true);
     try {
       const res = await fetch('/api/courses', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ places: savedPlaces }),
+        body: JSON.stringify({ places: coursePlaces }),
       });
       if (!res.ok) throw new Error('코스 생성 실패');
       const { id } = await res.json() as { id: string };
@@ -80,14 +99,15 @@ export default function SavedPage() {
           </Link>
         </div>
       ) : (
-        <div className="px-4 pt-2 pb-32 space-y-2.5">
+        <div className="px-4 pt-2 pb-32 space-y-4">
+          <CourseEditor places={coursePlaces} onChange={handleCourseOrderChange} />
           {savedPlaces.map((place) => (
             <PlaceCard key={place.id} place={place} regionId={place.region_id} />
           ))}
         </div>
       )}
 
-      {savedPlaces.length >= 2 && (
+      {coursePlaces.length >= 2 && (
         <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-sm px-4 py-4 bg-white/90 backdrop-blur-sm border-t border-gray-100 z-30">
           <button
             type="button"
@@ -101,7 +121,7 @@ export default function SavedPage() {
                 코스 만드는 중...
               </span>
             ) : (
-              `코스 만들기 · ${savedPlaces.length}곳`
+              `코스 만들기 · ${coursePlaces.length}곳`
             )}
           </button>
         </div>
