@@ -4,6 +4,10 @@ export type KakaoMapInstance = {
   setBounds: (bounds: KakaoLatLngBoundsInstance) => void;
 };
 
+export type KakaoPolylineInstance = {
+  setMap: (map: KakaoMapInstance | null) => void;
+};
+
 export type KakaoMarkerInstance = {
   setMap: (map: KakaoMapInstance | null) => void;
 };
@@ -23,6 +27,14 @@ type KakaoMaps = {
     position: KakaoLatLngInstance;
     map: KakaoMapInstance;
   }) => KakaoMarkerInstance;
+  Polyline: new (options: {
+    path: KakaoLatLngInstance[];
+    strokeWeight: number;
+    strokeColor: string;
+    strokeOpacity: number;
+    strokeStyle: string;
+    map: KakaoMapInstance;
+  }) => KakaoPolylineInstance;
   LatLngBounds: new () => KakaoLatLngBoundsInstance;
 };
 

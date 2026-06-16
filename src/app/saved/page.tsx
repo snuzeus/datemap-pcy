@@ -8,6 +8,7 @@ import { useSavedPlaces } from '@/hooks/useSavedPlaces';
 import { PlaceCard, PlaceCardSkeleton } from '@/components/PlaceCard';
 import { AuthModal } from '@/components/AuthModal';
 import { CourseEditor } from '@/components/CourseEditor';
+import KakaoMapDynamic from '@/components/KakaoMapDynamic';
 import type { Place } from '@/types';
 
 export default function SavedPage() {
@@ -17,6 +18,9 @@ export default function SavedPage() {
   const { data: savedPlaces = [], isLoading } = useSavedPlaces(user?.id);
   const [coursePlaces, setCoursePlaces] = useState<Place[]>([]);
   const router = useRouter();
+  const routePoints = coursePlaces
+    .filter((place) => Number.isFinite(place.lat) && Number.isFinite(place.lng))
+    .map((place) => ({ lat: place.lat, lng: place.lng, label: place.name }));
 
   useEffect(() => {
     setCoursePlaces((prev) => {
@@ -101,6 +105,35 @@ export default function SavedPage() {
       ) : (
         <div className="pb-32">
           <div className="bg-gray-50 border-y border-gray-100 px-4 py-4">
+            <section className="mb-4 space-y-3" aria-labelledby="course-map-title">
+              <div className="flex items-end justify-between gap-3">
+                <div>
+                  <p className="mb-0.5 text-[11px] text-gray-400">Route</p>
+                  <h2 id="course-map-title" className="text-[16px] font-black text-gray-900">
+                    동선 미리보기
+                  </h2>
+                </div>
+                <p className="text-[12px] text-gray-400">{routePoints.length}개 지점</p>
+              </div>
+
+              {routePoints.length >= 2 ? (
+                <div className="h-[160px] overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+                  <KakaoMapDynamic
+                    markers={routePoints}
+                    path={routePoints}
+                    center={routePoints[0]}
+                    className="h-full"
+                  />
+                </div>
+              ) : (
+                <div className="flex h-[120px] items-center justify-center rounded-2xl border border-gray-100 bg-white">
+                  <p className="text-[12px] text-gray-400">
+                    좌표가 있는 장소를 2개 이상 저장하면 동선을 볼 수 있어요.
+                  </p>
+                </div>
+              )}
+            </section>
+
             <CourseEditor places={coursePlaces} onChange={handleCourseOrderChange} />
           </div>
 
