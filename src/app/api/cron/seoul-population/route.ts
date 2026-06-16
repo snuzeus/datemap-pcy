@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { isSupabaseConfigured } from '@/lib/supabase';
 import { isSupabaseAdminConfigured, supabaseAdmin } from '@/lib/supabaseAdmin';
+import { calcHotScore } from '@/lib/hotScore';
 
 const AREA_MAP: Record<string, string> = {
   seongsu: '성수카페거리',
@@ -103,14 +104,29 @@ export async function GET(request: Request) {
       const population = await fetchPopulationDensity(areaName);
       const updatedAt = new Date().toISOString();
 
+      const { data: existing, error: readError } = await admin
+        .from('regions')
+        .select('search_volume')
+        .eq('id', regionId)
+        .single();
+
+      if (readError) throw new Error(`Supabase read failed for ${regionId}: ${readError.message}`);
+
+      const searchVolume = Number(existing?.search_volume ?? 0);
+      const hotScore = calcHotScore({
+        searchVolume,
+        populationDensity: population.density,
+      });
+
       const { data, error } = await admin
         .from('regions')
         .update({
           population_density: population.density,
+          hot_score: hotScore,
           updated_at: updatedAt,
         })
         .eq('id', regionId)
-        .select('id, population_density, updated_at')
+        .select('id, hot_score, population_density, updated_at')
         .single();
 
       if (error) throw new Error(`Supabase update failed for ${regionId}: ${error.message}`);
@@ -119,6 +135,8 @@ export async function GET(request: Request) {
       return {
         regionId,
         ...population,
+        searchVolume,
+        hotScore: data.hot_score as number,
         updatedAt: data.updated_at as string,
       };
     }),
