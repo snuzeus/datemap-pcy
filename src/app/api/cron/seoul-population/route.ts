@@ -1,14 +1,8 @@
 import { NextResponse } from 'next/server';
 import { isSupabaseConfigured } from '@/lib/supabase';
 import { isSupabaseAdminConfigured, supabaseAdmin } from '@/lib/supabaseAdmin';
-
-const AREA_MAP: Record<string, string> = {
-  seongsu: '성수카페거리',
-  hongdae: '홍대 관광특구',
-  gangnam: '강남역',
-  itaewon: '이태원 관광특구',
-  yeonnam: '연남동',
-};
+import { calcHotScore } from '@/lib/hotScore';
+import { REGION_CATALOG } from '@/lib/regionCatalog';
 
 const CONGESTION_SCORE: Record<string, number> = {
   여유: 20,
@@ -97,20 +91,38 @@ export async function GET(request: Request) {
   }
 
   const admin = supabaseAdmin;
+  const trackedRegions = REGION_CATALOG.filter((region) => region.seoulAreaName);
 
   const results = await Promise.allSettled(
-    Object.entries(AREA_MAP).map(async ([regionId, areaName]) => {
+    trackedRegions.map(async (region) => {
+      const regionId = region.id;
+      const areaName = region.seoulAreaName!;
       const population = await fetchPopulationDensity(areaName);
       const updatedAt = new Date().toISOString();
+
+      const { data: existing, error: readError } = await admin
+        .from('regions')
+        .select('search_volume')
+        .eq('id', regionId)
+        .single();
+
+      if (readError) throw new Error(`Supabase read failed for ${regionId}: ${readError.message}`);
+
+      const searchVolume = Number(existing?.search_volume ?? 0);
+      const hotScore = calcHotScore({
+        searchVolume,
+        populationDensity: population.density,
+      });
 
       const { data, error } = await admin
         .from('regions')
         .update({
           population_density: population.density,
+          hot_score: hotScore,
           updated_at: updatedAt,
         })
         .eq('id', regionId)
-        .select('id, population_density, updated_at')
+        .select('id, hot_score, population_density, updated_at')
         .single();
 
       if (error) throw new Error(`Supabase update failed for ${regionId}: ${error.message}`);
@@ -119,6 +131,8 @@ export async function GET(request: Request) {
       return {
         regionId,
         ...population,
+        searchVolume,
+        hotScore: data.hot_score as number,
         updatedAt: data.updated_at as string,
       };
     }),
@@ -127,7 +141,7 @@ export async function GET(request: Request) {
   const successes = results.filter((result) => result.status === 'fulfilled');
   const failures = results
     .map((result, index) => ({
-      regionId: Object.keys(AREA_MAP)[index],
+      regionId: trackedRegions[index].id,
       reason: getFailureReason(result),
     }))
     .filter((failure) => failure.reason);
@@ -135,7 +149,7 @@ export async function GET(request: Request) {
   return NextResponse.json(
     {
       updated: successes.length,
-      total: Object.keys(AREA_MAP).length,
+      total: trackedRegions.length,
       results: successes.map((result) => result.value),
       failures,
     },

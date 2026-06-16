@@ -1,19 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+import { getRegionGradient } from '@/lib/regionCatalog';
 import type { Place } from '@/types';
 
 type Props = {
   places: Place[];
   onChange: (places: Place[]) => void;
-};
-
-const REGION_GRADIENT: Record<string, string> = {
-  seongsu: 'g-seongsu',
-  hongdae: 'g-hongdae',
-  gangnam: 'g-gangnam',
-  itaewon: 'g-itaewon',
-  yeonnam: 'g-yeonnam',
 };
 
 function reorderPlaces(places: Place[], fromIndex: number, toIndex: number) {
@@ -58,7 +51,7 @@ export function CourseEditor({ places, onChange }: Props) {
 
       <ol className="space-y-2.5">
         {places.map((place, index) => {
-          const gradient = REGION_GRADIENT[place.region_id] ?? 'g-seongsu';
+          const gradient = getRegionGradient(place.region_id);
           const isDragging = draggingId === place.id;
 
           return (

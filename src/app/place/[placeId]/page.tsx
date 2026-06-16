@@ -7,14 +7,7 @@ import KakaoMapDynamic from '@/components/KakaoMapDynamic';
 import { usePlacesByRegion } from '@/hooks/usePlacesByRegion';
 import { SaveButton } from '@/components/SaveButton';
 import { ReviewList } from '@/components/ReviewList';
-
-const REGION_GRADIENT: Record<string, string> = {
-  seongsu: 'g-seongsu',
-  hongdae: 'g-hongdae',
-  gangnam: 'g-gangnam',
-  itaewon: 'g-itaewon',
-  yeonnam: 'g-yeonnam',
-};
+import { getRegionGradient } from '@/lib/regionCatalog';
 
 const DARK_OVERLAY = 'linear-gradient(to top, rgba(0,0,0,0.65), transparent 55%)';
 
@@ -31,7 +24,7 @@ export default function PlaceDetailPage({ params }: Props) {
 function PlaceDetailContent({ placeId }: { placeId: string }) {
   const searchParams = useSearchParams();
   const regionId = searchParams.get('regionId');
-  const gradient = (regionId && REGION_GRADIENT[regionId]) ?? 'g-seongsu';
+  const gradient = regionId ? getRegionGradient(regionId) : 'g-seongsu';
   const backHref = regionId ? `/region/${regionId}` : '/';
 
   const { data: places, isLoading } = usePlacesByRegion(regionId ?? '');

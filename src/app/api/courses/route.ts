@@ -2,21 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { randomUUID } from 'crypto';
 import { courseStore } from '@/lib/localCourseStore';
 import { createSupabaseRouteClient } from '@/lib/supabaseServer';
+import { REGION_CATALOG_BY_ID } from '@/lib/regionCatalog';
 import type { Place } from '@/types';
-
-const REGION_NAMES: Record<string, string> = {
-  seongsu: '성수동',
-  hongdae: '홍대·합정',
-  gangnam: '강남·청담',
-  itaewon: '이태원·한남',
-  yeonnam: '연남·망원',
-};
 
 function deriveTitle(places: Place[]): string {
   const counts: Record<string, number> = {};
   for (const p of places) counts[p.region_id] = (counts[p.region_id] ?? 0) + 1;
   const topRegion = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0];
-  const name = topRegion ? (REGION_NAMES[topRegion] ?? topRegion) : '서울';
+  const name = topRegion ? (REGION_CATALOG_BY_ID[topRegion]?.name ?? topRegion) : '서울';
   return `${name} 데이트 코스`;
 }
 

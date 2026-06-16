@@ -8,15 +8,19 @@ import {
   RegionBigCardSkeleton,
   RegionSubCardSkeleton,
 } from '@/components/RegionCard';
+import { REGION_CATALOG } from '@/lib/regionCatalog';
 import type { Region } from '@/types';
 
-const MOCK_REGIONS: Region[] = [
-  { id: 'seongsu', name: '성수동', district: '서울 성동구', hot_score: 94.2, trend_direction: 'up', place_count: 142, image_url: null, updated_at: '' },
-  { id: 'hongdae', name: '홍대·합정', district: '서울 마포구', hot_score: 88.7, trend_direction: 'stable', place_count: 218, image_url: null, updated_at: '' },
-  { id: 'gangnam', name: '강남·청담', district: '서울 강남구', hot_score: 82.1, trend_direction: 'stable', place_count: 189, image_url: null, updated_at: '' },
-  { id: 'itaewon', name: '이태원·한남', district: '서울 용산구', hot_score: 76.5, trend_direction: 'up', place_count: 97, image_url: null, updated_at: '' },
-  { id: 'yeonnam', name: '연남·망원', district: '서울 마포구', hot_score: 71.3, trend_direction: 'down', place_count: 83, image_url: null, updated_at: '' },
-];
+const MOCK_REGIONS: Region[] = REGION_CATALOG.map((region) => ({
+  id: region.id,
+  name: region.name,
+  district: region.district,
+  hot_score: region.defaultSearchVolume,
+  trend_direction: 'stable',
+  place_count: 0,
+  image_url: null,
+  updated_at: '',
+}));
 
 export default function HomePage() {
   const { data, isLoading, isError } = useRegionRanking();
