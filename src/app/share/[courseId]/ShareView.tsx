@@ -2,15 +2,9 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { CourseSummaryCard } from '@/components/CourseSummaryCard';
+import { getRegionGradient } from '@/lib/regionCatalog';
 import type { CourseData } from '@/lib/localCourseStore';
-
-const REGION_GRADIENT: Record<string, string> = {
-  seongsu: 'g-seongsu',
-  hongdae: 'g-hongdae',
-  gangnam: 'g-gangnam',
-  itaewon: 'g-itaewon',
-  yeonnam: 'g-yeonnam',
-};
 
 type Props = { course: CourseData };
 
@@ -58,17 +52,18 @@ export default function ShareView({ course }: Props) {
         <h1 className="text-[18px] font-black text-gray-900 truncate">{course.title}</h1>
       </div>
 
-      {/* 코스 요약 */}
-      <div className="px-5 pb-5">
-        <p className="text-[13px] text-gray-400">
-          {course.places.length}곳 · {date}
-        </p>
+      <div className="px-5 pb-4">
+        <p className="text-[13px] text-gray-400">{date}</p>
+      </div>
+
+      <div className="px-4 pb-4">
+        <CourseSummaryCard places={course.places} />
       </div>
 
       {/* 장소 목록 */}
       <div className="px-4 pb-32 space-y-3">
         {course.places.map((place, index) => {
-          const gradient = REGION_GRADIENT[place.region_id] ?? 'g-seongsu';
+          const gradient = getRegionGradient(place.region_id);
           return (
             <Link
               key={place.id}

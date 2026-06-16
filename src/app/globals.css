@@ -21,6 +21,11 @@ body {
 .g-gangnam { background: linear-gradient(160deg, #f7971e 0%, #ffd200 100%); }
 .g-itaewon { background: linear-gradient(160deg, #11998e 0%, #38ef7d 100%); }
 .g-yeonnam { background: linear-gradient(160deg, #ee0979 0%, #ff6a00 100%); }
+.g-jamsil { background: linear-gradient(160deg, #0052d4 0%, #65c7f7 55%, #9cecfb 100%); }
+.g-myeongdong { background: linear-gradient(160deg, #d31027 0%, #ea384d 55%, #f7b733 100%); }
+.g-bukchon { background: linear-gradient(160deg, #283c86 0%, #45a247 100%); }
+.g-sinsa { background: linear-gradient(160deg, #f857a6 0%, #ff5858 100%); }
+.g-mullae { background: linear-gradient(160deg, #232526 0%, #414345 55%, #c9d6ff 100%); }
 
 /* 카드 인터랙션 */
 .pressable {

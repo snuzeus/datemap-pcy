@@ -1,16 +1,34 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { courseStore } from '@/lib/localCourseStore';
+import { courseStore, type CourseData } from '@/lib/localCourseStore';
+import { supabase } from '@/lib/supabase';
 import ShareView from './ShareView';
 
 type Props = { params: { courseId: string } };
 
-function getCourse(courseId: string) {
-  return courseStore.get(courseId);
+async function getCourse(courseId: string): Promise<CourseData | null> {
+  if (supabase) {
+    const { data, error } = await supabase
+      .from('courses')
+      .select('id, title, places, created_at')
+      .eq('id', courseId)
+      .maybeSingle();
+
+    if (error || !data) return null;
+
+    return {
+      id: data.id,
+      title: data.title,
+      places: Array.isArray(data.places) ? data.places : [],
+      created_at: data.created_at,
+    } as CourseData;
+  }
+
+  return courseStore.get(courseId) ?? null;
 }
 
-export function generateMetadata({ params }: Props): Metadata {
-  const course = getCourse(params.courseId);
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const course = await getCourse(params.courseId);
   if (!course) return { title: '코스를 찾을 수 없어요 | 답정너' };
 
   const description = `${course.places.length}곳을 담은 데이트 코스`;
@@ -27,8 +45,8 @@ export function generateMetadata({ params }: Props): Metadata {
   };
 }
 
-export default function SharePage({ params }: Props) {
-  const course = getCourse(params.courseId);
+export default async function SharePage({ params }: Props) {
+  const course = await getCourse(params.courseId);
 
   if (!course) {
     return (

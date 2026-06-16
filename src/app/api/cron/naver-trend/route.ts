@@ -1,14 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { calcHotScore } from '@/lib/hotScore';
-
-const REGIONS = [
-  { id: 'seongsu', name: '성수동', keyword: '성수동' },
-  { id: 'hongdae', name: '홍대', keyword: '홍대' },
-  { id: 'gangnam', name: '강남', keyword: '강남' },
-  { id: 'itaewon', name: '이태원', keyword: '이태원' },
-  { id: 'yeonnam', name: '연남동', keyword: '연남동' },
-];
+import { REGION_CATALOG } from '@/lib/regionCatalog';
 
 async function fetchSearchVolume(keyword: string): Promise<number> {
   const endDate = new Date().toISOString().split('T')[0];
@@ -46,7 +39,7 @@ export async function GET(request: Request) {
 
   try {
     const results = await Promise.allSettled(
-      REGIONS.map(async (region) => {
+      REGION_CATALOG.map(async (region) => {
         const searchVolume = await fetchSearchVolume(region.keyword);
 
         const { data: existing } = await supabase!
@@ -61,6 +54,7 @@ export async function GET(request: Request) {
         await supabase!.from('regions').upsert({
           id: region.id,
           name: region.name,
+          district: region.district,
           search_volume: searchVolume,
           hot_score,
           updated_at: new Date().toISOString(),
@@ -71,8 +65,8 @@ export async function GET(request: Request) {
     );
 
     const updated = results.filter((r) => r.status === 'fulfilled').length;
-    return NextResponse.json({ updated, total: REGIONS.length });
-  } catch (error) {
+    return NextResponse.json({ updated, total: REGION_CATALOG.length });
+  } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

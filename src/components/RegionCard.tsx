@@ -1,15 +1,8 @@
 'use client';
 
 import Link from 'next/link';
+import { getRegionGradient } from '@/lib/regionCatalog';
 import type { Region } from '@/types';
-
-const REGION_GRADIENT: Record<string, string> = {
-  seongsu: 'g-seongsu',
-  hongdae: 'g-hongdae',
-  gangnam: 'g-gangnam',
-  itaewon: 'g-itaewon',
-  yeonnam: 'g-yeonnam',
-};
 
 const TREND_LABEL: Record<Region['trend_direction'], string> = {
   up: '↑ 급상승',
@@ -43,7 +36,7 @@ type RegionSubCardProps = {
 };
 
 export function RegionBigCard({ region, rank }: RegionBigCardProps) {
-  const gradient = REGION_GRADIENT[region.id] ?? 'g-seongsu';
+  const gradient = getRegionGradient(region.id);
 
   return (
     <Link href={`/region/${region.id}`}>
@@ -95,7 +88,7 @@ export function RegionBigCard({ region, rank }: RegionBigCardProps) {
 }
 
 export function RegionSubCard({ region, rank }: RegionSubCardProps) {
-  const gradient = REGION_GRADIENT[region.id] ?? 'g-seongsu';
+  const gradient = getRegionGradient(region.id);
 
   return (
     <Link href={`/region/${region.id}`} className="flex-shrink-0 w-32 pressable">
