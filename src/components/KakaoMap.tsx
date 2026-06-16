@@ -5,6 +5,7 @@ import {
   loadKakaoMap,
   type KakaoMapInstance,
   type KakaoMarkerInstance,
+  type KakaoPolylineInstance,
 } from '@/lib/kakao';
 
 type Marker = {
@@ -16,13 +17,15 @@ type Marker = {
 type Props = {
   markers?: Marker[];
   center?: { lat: number; lng: number };
+  path?: Marker[];
   className?: string;
 };
 
-export default function KakaoMap({ markers = [], center, className = '' }: Props) {
+export default function KakaoMap({ markers = [], center, path = [], className = '' }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<KakaoMapInstance | null>(null);
   const markersRef = useRef<KakaoMarkerInstance[]>([]);
+  const polylineRef = useRef<KakaoPolylineInstance | null>(null);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -50,10 +53,24 @@ export default function KakaoMap({ markers = [], center, className = '' }: Props
           return marker;
         });
 
-        // 마커가 여러 개면 전체가 보이도록 bounds 조정
-        if (markers.length > 1) {
+        polylineRef.current?.setMap(null);
+        const linePath = path.map((point) => new kakao.maps.LatLng(point.lat, point.lng));
+        polylineRef.current = linePath.length >= 2
+          ? new kakao.maps.Polyline({
+              path: linePath,
+              strokeWeight: 4,
+              strokeColor: '#111827',
+              strokeOpacity: 0.85,
+              strokeStyle: 'solid',
+              map,
+            })
+          : null;
+
+        const boundsTargets = path.length >= 2 ? path : markers;
+        // 마커나 경로가 여러 개면 전체가 보이도록 bounds 조정
+        if (boundsTargets.length > 1) {
           const bounds = new kakao.maps.LatLngBounds();
-          markers.forEach((m) => bounds.extend(new kakao.maps.LatLng(m.lat, m.lng)));
+          boundsTargets.forEach((m) => bounds.extend(new kakao.maps.LatLng(m.lat, m.lng)));
           map.setBounds(bounds);
         }
       })
@@ -64,8 +81,10 @@ export default function KakaoMap({ markers = [], center, className = '' }: Props
     return () => {
       markersRef.current.forEach((m) => m.setMap(null));
       markersRef.current = [];
+      polylineRef.current?.setMap(null);
+      polylineRef.current = null;
     };
-  }, [markers, center]);
+  }, [markers, center, path]);
 
   return (
     <div className={`relative ${className}`}>

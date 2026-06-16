@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { randomUUID } from 'crypto';
 import { courseStore } from '@/lib/localCourseStore';
+import { createSupabaseRouteClient } from '@/lib/supabaseServer';
 import type { Place } from '@/types';
 
 const REGION_NAMES: Record<string, string> = {
@@ -34,6 +35,33 @@ export async function POST(request: NextRequest) {
     places,
     created_at: new Date().toISOString(),
   };
+
+  const supabase = createSupabaseRouteClient();
+  if (supabase) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    const { data, error } = await supabase
+      .from('courses')
+      .insert({
+        user_id: user?.id ?? null,
+        title: course.title,
+        place_ids: places.map((place) => place.id),
+        places,
+      })
+      .select('id, title')
+      .single();
+
+    if (error) {
+      return NextResponse.json(
+        { error: `코스를 저장하지 못했어요: ${error.message}` },
+        { status: 500 },
+      );
+    }
+
+    return NextResponse.json({ id: data.id, title: data.title }, { status: 201 });
+  }
 
   courseStore.set(id, course);
   return NextResponse.json({ id, title: course.title }, { status: 201 });

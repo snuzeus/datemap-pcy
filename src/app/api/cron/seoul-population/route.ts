@@ -1,58 +1,144 @@
 import { NextResponse } from 'next/server';
-import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+import { isSupabaseConfigured } from '@/lib/supabase';
+import { isSupabaseAdminConfigured, supabaseAdmin } from '@/lib/supabaseAdmin';
 
 const AREA_MAP: Record<string, string> = {
-  seongsu: '성수1가1동',
-  hongdae: '서교동',
-  gangnam: '역삼1동',
-  itaewon: '이태원1동',
+  seongsu: '성수카페거리',
+  hongdae: '홍대 관광특구',
+  gangnam: '강남역',
+  itaewon: '이태원 관광특구',
   yeonnam: '연남동',
 };
 
-async function fetchPopulationDensity(areaName: string): Promise<number> {
-  const key = process.env.SEOUL_API_KEY!;
+const CONGESTION_SCORE: Record<string, number> = {
+  여유: 20,
+  보통: 50,
+  '약간 붐빔': 70,
+  붐빔: 90,
+};
+
+type SeoulPopulationStatus = {
+  AREA_CONGEST_LVL?: string;
+};
+
+type SeoulPopulationResponse = {
+  SeoulRtd?: {
+    CITYDATA?: {
+      LIVE_PPLTN_STTS?: SeoulPopulationStatus | SeoulPopulationStatus[];
+    };
+  };
+  'SeoulRtd.citydata_ppltn'?: SeoulPopulationStatus[];
+};
+
+function getPopulationStatus(data: SeoulPopulationResponse) {
+  const cityDataStatus = data['SeoulRtd.citydata_ppltn'];
+  if (cityDataStatus?.length) return cityDataStatus[0];
+
+  const status = data.SeoulRtd?.CITYDATA?.LIVE_PPLTN_STTS;
+  return Array.isArray(status) ? status[0] : status;
+}
+
+function toDensityScore(level: string | undefined) {
+  if (!level) return 50;
+  return CONGESTION_SCORE[level] ?? 50;
+}
+
+async function fetchPopulationDensity(areaName: string): Promise<{
+  areaName: string;
+  congestionLevel: string | null;
+  density: number;
+}> {
+  const key = process.env.SEOUL_API_KEY;
+  if (!key) throw new Error('SEOUL_API_KEY is missing');
+
   const url = `http://openapi.seoul.go.kr:8088/${key}/json/citydata_ppltn/1/5/${encodeURIComponent(areaName)}`;
 
   const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
   if (!res.ok) throw new Error(`Seoul API error: ${res.status}`);
 
-  const data = await res.json();
-  const level = data.SeoulRtd?.CITYDATA?.LIVE_PPLTN_STTS?.AREA_CONGEST_LVL;
+  const data = (await res.json()) as SeoulPopulationResponse;
+  const congestionLevel = getPopulationStatus(data)?.AREA_CONGEST_LVL ?? null;
 
-  // 혼잡도 레벨 → 0~100 변환
-  const levelMap: Record<string, number> = {
-    '여유': 20,
-    '보통': 50,
-    '약간 붐빔': 70,
-    '붐빔': 90,
+  return {
+    areaName,
+    congestionLevel,
+    density: toDensityScore(congestionLevel ?? undefined),
   };
-  return levelMap[level] ?? 50;
+}
+
+function getFailureReason(result: PromiseSettledResult<unknown>) {
+  if (result.status === 'fulfilled') return null;
+  return result.reason instanceof Error ? result.reason.message : 'Unknown error';
 }
 
 export async function GET(request: Request) {
+  if (!process.env.CRON_SECRET) {
+    return NextResponse.json({ error: 'CRON_SECRET is missing' }, { status: 503 });
+  }
+
   const auth = request.headers.get('Authorization');
   if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  if (!process.env.SEOUL_API_KEY) {
+    return NextResponse.json({ error: 'SEOUL_API_KEY is missing' }, { status: 503 });
+  }
+
   if (!isSupabaseConfigured) {
     return NextResponse.json({ error: 'Supabase not configured' }, { status: 503 });
   }
 
-  try {
-    const results = await Promise.allSettled(
-      Object.entries(AREA_MAP).map(async ([regionId, areaName]) => {
-        const density = await fetchPopulationDensity(areaName);
-        await supabase!
-          .from('regions')
-          .update({ population_density: density, updated_at: new Date().toISOString() })
-          .eq('id', regionId);
-        return { regionId, density };
-      })
+  if (!isSupabaseAdminConfigured || !supabaseAdmin) {
+    return NextResponse.json(
+      { error: 'SUPABASE_SERVICE_ROLE_KEY is missing' },
+      { status: 503 },
     );
-
-    const updated = results.filter((r) => r.status === 'fulfilled').length;
-    return NextResponse.json({ updated, total: Object.keys(AREA_MAP).length });
-  } catch {
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
+
+  const admin = supabaseAdmin;
+
+  const results = await Promise.allSettled(
+    Object.entries(AREA_MAP).map(async ([regionId, areaName]) => {
+      const population = await fetchPopulationDensity(areaName);
+      const updatedAt = new Date().toISOString();
+
+      const { data, error } = await admin
+        .from('regions')
+        .update({
+          population_density: population.density,
+          updated_at: updatedAt,
+        })
+        .eq('id', regionId)
+        .select('id, population_density, updated_at')
+        .single();
+
+      if (error) throw new Error(`Supabase update failed for ${regionId}: ${error.message}`);
+      if (!data) throw new Error(`Supabase update affected no rows for ${regionId}`);
+
+      return {
+        regionId,
+        ...population,
+        updatedAt: data.updated_at as string,
+      };
+    }),
+  );
+
+  const successes = results.filter((result) => result.status === 'fulfilled');
+  const failures = results
+    .map((result, index) => ({
+      regionId: Object.keys(AREA_MAP)[index],
+      reason: getFailureReason(result),
+    }))
+    .filter((failure) => failure.reason);
+
+  return NextResponse.json(
+    {
+      updated: successes.length,
+      total: Object.keys(AREA_MAP).length,
+      results: successes.map((result) => result.value),
+      failures,
+    },
+    { status: failures.length > 0 ? 207 : 200 },
+  );
 }
